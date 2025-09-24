@@ -73,9 +73,13 @@ function computeIndexFromRow(row) {
 
   const HPI = numerator / denominator;
 
-  let category = "Safe";
-  if (HPI > 30) category = "Unsafe";
-  else if (HPI >= 15) category = "Moderate";
+  //let category = "Safe";
+  //if (HPI > 30) category = "Unsafe";
+  //else if (HPI >= 15) category = "Moderate";
+
+  let category = "Unsafe";
+  if (HPI < 100 ) category = "Safe";
+  else if (HPI <= 150 ) category = "Moderate";
 
   return { index: Number(HPI.toFixed(2)), category };
 }
