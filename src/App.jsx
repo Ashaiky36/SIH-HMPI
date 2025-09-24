@@ -50,17 +50,34 @@ L.Icon.Default.mergeOptions({
 const CATEGORY_COLORS = { Safe: '#16a34a', Moderate: '#f59e0b', Unsafe: '#ef4444' };
 
 function computeIndexFromRow(row) {
-  const metals = ['Fe', 'Mn', 'As', 'Pb', 'Cd'];
-  let sum = 0;
-  for (const m of metals) {
-    const v = parseFloat(row[m]) || 0;
-    sum += v / (m === 'Fe' ? 300 : m === 'Mn' ? 100 : 0.05);
+  // WHO / IS 10500 limits (mg/L)
+  const limits = { Fe: 0.3, Mn: 0.1, As: 0.01, Pb: 0.01, Cd: 0.003 };
+  // Ideal values (0 for toxic metals, 0 for As, Pb, Cd; Fe and Mn often taken as 0 too)
+  const ideals = { Fe: 0, Mn: 0, As: 0, Pb: 0, Cd: 0 };
+
+  let numerator = 0;
+  let denominator = 0;
+
+  for (const metal of Object.keys(limits)) {
+    const Mi = parseFloat(row[metal]) || 0;
+    const Si = limits[metal];
+    const Ii = ideals[metal];
+    const Wi = 1 / Si;
+
+    // Quality rating Qi
+    const Qi = ((Mi - Ii) / (Si - Ii)) * 100;
+
+    numerator += Qi * Wi;
+    denominator += Wi;
   }
-  const index = sum;
-  let category = 'Safe';
-  if (index > 5) category = 'Unsafe';
-  else if (index > 1.5) category = 'Moderate';
-  return { index: Number(index.toFixed(2)), category };
+
+  const HPI = numerator / denominator;
+
+  let category = "Safe";
+  if (HPI > 30) category = "Unsafe";
+  else if (HPI >= 15) category = "Moderate";
+
+  return { index: Number(HPI.toFixed(2)), category };
 }
 
 function parseCsvFile(file) {
